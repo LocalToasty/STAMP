@@ -2,8 +2,8 @@
 In parts from https://github.com/lucidrains/vit-pytorch/blob/main/vit_pytorch/vit.py
 """
 
+# %%
 import torch
-import torch.nn.functional as F
 from einops import repeat
 from torch import nn
 
@@ -24,10 +24,47 @@ class FeedForward(nn.Module):
         return self.mlp(x)
 
 
-class Attention(nn.Module):
+class MultiHeadDiffAttention(nn.Module):
     def __init__(
-        self, dim, heads=8, dim_head=512 // 8, norm_layer=nn.LayerNorm, dropout=0.0
-    ):
+        self, embed_dim: int, n_heads: int = 8, diff_weight_init: float = 0.2
+    ) -> None:
+        super().__init__()
+        self.n_heads = n_heads
+        self.q_proj = nn.Linear(embed_dim, embed_dim, bias=False)
+        self.k_proj = nn.Linear(embed_dim, embed_dim, bias=False)
+        self.v_proj = nn.Linear(embed_dim, embed_dim, bias=False)
+        self.norm = nn.RMSNorm([n_heads, embed_dim // n_heads])
+        self.o_proj = nn.Linear(embed_dim, embed_dim)
+
+        # TODO parameterize this like in the paper?
+        # But why???
+        self.diff_weight = nn.Parameter(torch.tensor(diff_weight_init))
+
+    def forward(
+        self,
+        x: torch.Tensor,
+    ) -> torch.Tensor:
+        # shape: [batch, seq_num, head, {0,1}, embedding]
+        qs = self.q_proj(x).view(*x.shape[:-1], self.n_heads, 2, -1)
+        ks = self.k_proj(x).view(*x.shape[:-1], self.n_heads, 2, -1)
+
+        s = qs.size(-1) ** (-1 / 2)  # scaling factor for
+
+        atts = torch.softmax(torch.einsum("bqhif,bkhif->ibhqk", qs, ks) * s, dim=-1)
+        # shape: [batch, head, query, key]
+        att = atts[0] - self.diff_weight * atts[1]
+
+        vs = self.v_proj(x).view(*x.shape[:-1], self.n_heads, -1)
+        # shape: [batch, seq_num, embed]
+        concated = self.norm(torch.einsum("bhqk,bkhe->bqhe", att, vs)).reshape(
+            *vs.shape[:-2], -1  # collapse heads and embeddings into one
+        )
+
+        return self.o_proj(concated) * (1 - self.diff_weight)
+
+
+class Attention(nn.Module):
+    def __init__(self, dim, heads=8, norm_layer=nn.LayerNorm, dropout=0.0) -> None:
         super().__init__()
         self.heads = heads
         self.norm = norm_layer(dim)
@@ -48,28 +85,28 @@ class Transformer(nn.Module):
     ):
         super().__init__()
         self.depth = depth
-        self.layers = nn.ModuleList([])
-        for _ in range(depth):
-            self.layers.append(
-                nn.ModuleList(
-                    [
-                        Attention(
-                            dim,
-                            heads=heads,
-                            dim_head=dim_head,
-                            norm_layer=norm_layer,
-                            dropout=dropout,
-                        ),
-                        FeedForward(
-                            dim, mlp_dim, norm_layer=norm_layer, dropout=dropout
-                        ),
-                    ]
-                )
+        self.layers = nn.ModuleList([
+            nn.ModuleList(
+                [
+                    # Attention(
+                    #     dim,
+                    #     heads=heads,
+                    #     dim_head=dim_head,
+                    #     norm_layer=norm_layer,
+                    #     dropout=dropout,
+                    # ),
+                    MultiHeadDiffAttention(embed_dim=dim, n_heads=heads),
+                    FeedForward(
+                        dim, mlp_dim, norm_layer=norm_layer, dropout=dropout
+                    ),
+                ]
             )
+            for _ in range(depth)
+        ])
         self.norm = norm_layer(dim)
 
     def forward(self, x, mask=None):
-        for attn, ff in self.layers:
+        for attn, ff in self.layers:    # pyright: ignore[reportGeneralTypeIssues]
             x_attn = attn(x, mask=mask)
             x = x_attn + x
             x = ff(x) + x
@@ -87,8 +124,8 @@ class TransMIL(nn.Module):
         heads: int = 8,
         dim_head: int = 64,
         mlp_dim: int = 2048,
-        dropout: int = 0.0,
-        emb_dropout: int = 0.0,
+        dropout: float = 0.0,
+        emb_dropout: float = 0.0,
     ):
         super().__init__()
         self.cls_token = nn.Parameter(torch.randn(dim))
@@ -115,7 +152,7 @@ class TransMIL(nn.Module):
         x = torch.cat((cls_tokens, x), dim=1)
         lens = lens + 1  # account for cls token
 
-        x = self.transformer(x, mask=None)
+        x = self.transformer(x)
 
         x = x[:, 0]  # only take class token
 
