@@ -28,6 +28,7 @@ dependencies = [
     "matplotlib>=3.9.2",
     "opencv-python>=4.10.0.84",
     "openpyxl>=3.1.5",
+    "openslide-bin>=4.0.0.6",
     "openslide-python>=1.4.1",
     "packaging>=24.2",
     "pandas>=2.2.3",
@@ -44,10 +45,10 @@ ctranspath = [
     "gdown>=5.2.0",
     "torchvision>=0.20.1",
 ]
-uni = [
-    "timm>=0.9.8",
-    "uni",
-]
+#uni = [
+#    "timm>=0.9.8",
+#    "uni",
+#]
 conch = [
     "conch",
 ]
@@ -55,7 +56,10 @@ dinobloom = [
     "torchvision>=0.20.1",
     "xformers>=0.0.28.post3",
 ]
-all = ["stamp[ctranspath,uni,conch,dinobloom]"]
+virchow2 = [
+    "timm>=0.9.11",
+]
+all = ["stamp[ctranspath,conch,dinobloom,virchow2]"]
 
 [project.scripts]
 "stamp" = "stamp.__main__:main"

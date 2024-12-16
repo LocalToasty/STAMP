@@ -16,7 +16,7 @@ from torch import Tensor
 from torch._prims_common import DeviceLikeType
 from torch.utils.data import DataLoader, IterableDataset
 from tqdm import tqdm
-
+from random import shuffle
 from stamp.preprocessing.extractor import Extractor
 from stamp.preprocessing.tiling import (
     Microns,
@@ -142,6 +142,10 @@ def extract_(
         from stamp.preprocessing.extractor.dinobloom import dino_bloom
 
         extractor = dino_bloom()
+    elif extractor == "virchow2":
+        from stamp.preprocessing.extractor.virchow2 import virchow2
+        
+        extractor = virchow2()
     elif isinstance(extractor, Extractor):
         extractor = extractor
     else:
@@ -153,16 +157,16 @@ def extract_(
     logger.info(f"Using extractor {extractor.identifier}")
 
     if cache_dir:
-        cache_dir.mkdir(exist_ok=True)
+        cache_dir.mkdir(exist_ok=True,parents=True)
     feat_output_dir = output_dir / extractor_id
 
     for slide_path in (
         progress := tqdm(
-            list(
+            np.random.permutation(list(
                 slide_path
                 for extension in supported_extensions
                 for slide_path in wsi_dir.glob(f"**/*{extension}")
-            )
+            )).tolist()
         )
     ):
         progress.set_description(str(slide_path.relative_to(wsi_dir)))
