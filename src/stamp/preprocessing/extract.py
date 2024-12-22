@@ -117,6 +117,7 @@ def extract_(
             "mahmood-conch",
             "mahmood-uni",
             "dino-bloom",
+            "virchow2"
         ]
         | Extractor
     ),
@@ -152,7 +153,7 @@ def extract_(
         assert_never(extractor)  # This should be unreachable
 
     model = extractor.model.to(accelerator).eval()
-    extractor_id = f"{extractor.identifier}-{_get_preprocessing_code_hash()[:8]}"
+    extractor_id = f"{extractor.identifier}-stamp-maru-21-12-24" #-{_get_preprocessing_code_hash()[:8]}
 
     logger.info(f"Using extractor {extractor.identifier}")
 
