@@ -117,7 +117,10 @@ def extract_(
             "mahmood-conch",
             "mahmood-uni",
             "dino-bloom",
-            "virchow2"
+            "virchow2",
+            "gigapath",
+            "dinoSSL",
+            "h_optimus_0",
         ]
         | Extractor
     ),
@@ -147,6 +150,18 @@ def extract_(
         from stamp.preprocessing.extractor.virchow2 import virchow2
         
         extractor = virchow2()
+    elif extractor == "gigapath":
+        from stamp.preprocessing.extractor.gigapath import gigapath
+
+        extractor = gigapath()
+    elif extractor == "dinoSSL":
+        from stamp.preprocessing.extractor.dinoSSL import dinoSSL
+
+        extractor = dinoSSL()
+    elif extractor == "h_optimus_0":
+        from stamp.preprocessing.extractor.h_optimus_0 import h_optimus_0
+
+        extractor = h_optimus_0()
     elif isinstance(extractor, Extractor):
         extractor = extractor
     else:

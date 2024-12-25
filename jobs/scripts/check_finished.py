@@ -1,7 +1,7 @@
 import os
 import argparse
 
-feature_extractors = ["virchow2", "mahmood-uni", "mahmood-conch", "h-optimus-0", "gigapath"]
+feature_extractors = ["virchow2", "mahmood-uni", "mahmood-conch", "h_optimus_0", "gigapath","dinoSSL","ctranspath"]
 cohorts = [
     "GBM", "LGG", "BLCA", "LUAD", "BRCA", "DLBC", "CHOL", "ESCA", "CRC", "CESC", 
     "UCS", "UCEC", "THYM", "THCA", "TGCT", "STAD", "SKCM", "SARC", "PRAD", "PCPG", 

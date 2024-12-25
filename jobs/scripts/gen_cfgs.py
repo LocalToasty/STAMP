@@ -10,14 +10,15 @@ base_config = {
         'extractor': "",
         'accelerator': "cuda",
         'cache_dir': "",
-        'tile_size_um': 112.0,
+        'tile_size_um': 224.0,
         'tile_size_px': 224,
         'max_workers': 14
     }
 }
 
 # Define the different feature extractors and cohorts
-feature_extractors = ["virchow2","mahmood-uni", "mahmood-conch","h-optimus-0","gigapath"] # google model is tf so would avoid.. 
+feature_extractors = ["ctranspath","dinoSSL","virchow2","mahmood-uni", 
+                      "mahmood-conch","h_optimus_0","gigapath"] # google model is tf so would avoid.. 
 cohorts = [
     "GBM", "LGG", "BLCA", "LUAD", "BRCA", "DLBC", "CHOL", "ESCA", "CRC", "CESC", 
     "UCS", "UCEC", "THYM", "THCA", "TGCT", "STAD", "SKCM", "SARC", "PRAD", "PCPG", 
@@ -25,11 +26,11 @@ cohorts = [
 ]
 
 # Define the directories
-base_output_dir = "/data/horse/ws/s1787956-TCGA/features/features-20x"
+base_output_dir = "/data/horse/ws/s1787956-TCGA/features/features-10x"
 base_wsi_dir = "/data/horse/ws/s1787956-TCGA/WSI"
-base_cache_dir = "/data/horse/ws/s1787956-TCGA/Cache/Cache-20x"
-config_dir = "/data/horse/ws/s1787956-cobra-horse/code/stamp/src/stamp/configs"
-job_dir = "/data/horse/ws/s1787956-cobra-horse/code/stamp/jobs/tcga"
+base_cache_dir = "/data/horse/ws/s1787956-TCGA/Cache/Cache-10x"
+config_dir = "/data/horse/ws/s1787956-cobra-horse/code/stamp/src/stamp/configs-10x"
+job_dir = "/data/horse/ws/s1787956-cobra-horse/code/stamp/jobs/tcga-10x"
 
 # Create directories if they don't exist
 os.makedirs(config_dir, exist_ok=True)

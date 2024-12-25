@@ -26,7 +26,7 @@ class Virchow2clsOnly(torch.nn.Module):
 def virchow2():
     """Extracts features from slide tiles using Virchow2 tile encoder."""
 
-    checkpoint_path = Path(_stamp_cache_dir) / "virchow2" / "pytorch_model.bin"
+    #checkpoint_path = Path(_stamp_cache_dir) / "virchow2" / "pytorch_model.bin"
 
     # Load the model structure
     model = timm.create_model(
