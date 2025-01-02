@@ -14,6 +14,7 @@ import cv2
 import numpy as np
 import numpy.typing as npt
 import openslide
+from time import sleep
 from PIL import Image
 
 __author__ = "Marko van Treeck"
@@ -109,6 +110,14 @@ def tiles_with_cache(
         # Since renaming is an atomic operation on most file systems,
         # this will ensure that our cache zips will always be consistent.
         tmp_cache_file_path = cache_file_path.with_suffix(".tmp")
+        if tmp_cache_file_path.exists():
+            # If the temporary file already exists, we can assume that
+            # another process is currently extracting the features.
+            # We will wait for that process to finish and then return its results.
+            while not cache_file_path.exists():
+                sleep(1)
+            yield from _tiles_from_cache_file(cache_file_path)
+            return   
         try:
             with ZipFile(tmp_cache_file_path, "w") as zip:
                 with zip.open("tiler_params.json", "w") as tiler_params_json_fp:
@@ -134,8 +143,8 @@ def tiles_with_cache(
             tmp_cache_file_path.unlink(missing_ok=True)
             raise e
 
-        # We have written the entire file, time to rename it to its final name.
-        tmp_cache_file_path.rename(cache_file_path)
+    # We have written the entire file, time to rename it to its final name.
+    tmp_cache_file_path.rename(cache_file_path)
 
 
 def _tiles_with_tissue(

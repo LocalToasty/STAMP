@@ -212,7 +212,7 @@ def extract_(
                 brightness_cutoff=brightness_cutoff,
             )
             # Parallelism is implemented in the dataset iterator already, so one worker is enough!
-            dl = DataLoader(ds, batch_size=64, num_workers=1, drop_last=False)
+            dl = DataLoader(ds, batch_size=16, num_workers=1, drop_last=False)
 
             feats, xs_um, ys_um = [], [], []
             for tiles, xs, ys in tqdm(dl, leave=False):
