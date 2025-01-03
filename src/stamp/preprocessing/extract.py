@@ -192,9 +192,9 @@ def extract_(
             wsi_dir
         ).with_suffix(".h5")
         tmp_feature_output_path = feature_output_path.with_suffix(".tmp")
-        if feature_output_path.exists():
+        if feature_output_path.exists() or tmp_feature_output_path.exists() :
             logger.debug(
-                f"skipping {slide_path} because {feature_output_path} already exists"
+                f"skipping {slide_path} because {feature_output_path} already exists or is being processed currently"
             )
             continue
 

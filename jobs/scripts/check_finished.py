@@ -8,10 +8,11 @@ def count_files(directory, extension):
 def count_non_empty_h5_files(directory):
     return len([f for f in os.listdir(directory) if f.endswith('.h5') and os.path.getsize(os.path.join(directory, f)) > 0])
 
-def check_preprocessing(cohorts, feature_extractors, wsi_base_dir, h5_base_dir):
+def check_preprocessing(cohorts, feature_extractors, wsi_base_dir, h5_base_dir,summary_only=False):
     summary = {cohort: {model: None for model in feature_extractors} for cohort in cohorts}
     for model in feature_extractors:
-        print(f"\033[1m{model}\033[0m")
+        if not summary_only:
+            print(f"\033[1m{model}\033[0m")
         for cohort in cohorts:
             wsi_dir = os.path.join(wsi_base_dir, f"TCGA-{cohort}-DX-IMGS", f"data-{cohort}")
             num_wsi_files = count_files(wsi_dir, '.svs')
@@ -28,13 +29,16 @@ def check_preprocessing(cohorts, feature_extractors, wsi_base_dir, h5_base_dir):
                 else:
                     continue            
                 if num_h5_files == num_wsi_files:
-                    print(f"\033[92mCohort \033[1m{cohort}\033[0m\033[92m is completely processed for model \033[1m{model}\033[0m\033[92m with {num_wsi_files} WSIs\033[0m")
+                    if not summary_only:
+                        print(f"\033[92mCohort \033[1m{cohort}\033[0m\033[92m is completely processed for model \033[1m{model}\033[0m\033[92m with {num_wsi_files} WSIs\033[0m")
                 elif num_h5_files > 0:
-                    print(f"Cohort \033[1m{cohort}\033[0m is partially processed for model \033[1m{model}\033[0m: {num_h5_files}/{num_wsi_files} slides processed")
+                    if not summary_only:
+                        print(f"Cohort \033[1m{cohort}\033[0m is partially processed for model \033[1m{model}\033[0m: {num_h5_files}/{num_wsi_files} slides processed")
                 summary[cohort][model] = (num_wsi_files,num_h5_files)
             else:
                 summary[cohort][model] = (num_wsi_files,0)
-        print("")
+        if not summary_only:
+            print("")
     
     print("\033[1mSummary of missing slides:\033[0m")
     sorted_cohorts = sorted(cohorts, key=lambda cohort: max(summary[cohort][model][0] for model in feature_extractors), reverse=True)
@@ -53,7 +57,7 @@ def check_preprocessing(cohorts, feature_extractors, wsi_base_dir, h5_base_dir):
                 print(f"Cohort \033[1m{cohort}\033[0m: Model \033[1m{model}\033[0m is missing {missing} slides ({num_h5_files}/{num_wsi_files} processed)")
         print("")
 
-def delete_cache_and_resubmit_jobs(cohorts, feature_extractors, wsi_base_dir, h5_base_dir, magnification):
+def delete_cache_and_resubmit_jobs(cohorts, feature_extractors, wsi_base_dir, h5_base_dir, magnification,delete_cache=True):
     cache_base_dir = f"/p/scratch/mfmpm/data/TCGA-Cache/Cache-{magnification}x"
     for cohort in cohorts:
         print(cohort)
@@ -74,15 +78,16 @@ def delete_cache_and_resubmit_jobs(cohorts, feature_extractors, wsi_base_dir, h5
                         if len(cache_files) == 0:
                             print(f"No cache files found for {file} in {os.path.join(cache_base_dir,f'TCGA-{cohort}')}")
                             continue
-                        for cache_file in cache_files:
-                            cache_file_path = os.path.join(cache_base_dir,f"TCGA-{cohort}", cache_file)
-                            print(f"Deleting cache file: {cache_file_path}")
-                            os.remove(cache_file_path)
+                        if delete_cache:
+                            for cache_file in cache_files:
+                                cache_file_path = os.path.join(cache_base_dir,f"TCGA-{cohort}", cache_file)
+                                print(f"Deleting cache file: {cache_file_path}")
+                                os.remove(cache_file_path)
                         #if os.path.exists(cache_file):
                         #    os.remove(cache_file)
                     if missing_files:
                         print(f"Submitting jobs for model {model}, cohort {cohort}, magnification {magnification}x")
-                        subprocess.run(["bash", "submit_jobs.sh", model, cohort, "1", "1", f"{magnification}x"])
+                        subprocess.run(["bash", "submit_jobs.sh", model, cohort, "1", "2", f"{magnification}x"])
         print("")
     # if __name__ == "__main__":
     #     feature_extractors = ["virchow2", "mahmood-uni", "mahmood-conch", "h_optimus_0", "gigapath","dinoSSL","ctranspath"]
@@ -144,12 +149,15 @@ if __name__ == "__main__":
     parser.add_argument('-f','--models', nargs='+', default=feature_extractors, help="List of models to check, e.g., --models virchow2 mahmood-uni")
     parser.add_argument('-m',"--magnification", type=int, default=5, help="Magnification level of the WSIs")
     parser.add_argument('-r','--resubmit', action='store_true', help="Delete cache and resubmit jobs for missing WSIs")
+    parser.add_argument('-s','--summary_only', action='store_true', help="Print summary only")
+    parser.add_argument('-d','--delete_cache', action='store_true', help="Delete cache files")
     args = parser.parse_args()
     wsi_base_dir = "/p/scratch/mfmpm/data/TCGA"
     h5_base_dir = f"/p/scratch/mfmpm/data/TCGA-feats/features-{args.magnification}x"
     if args.print_missing:
         print_missing_wsi_files(args.cohorts,args.models,wsi_base_dir,h5_base_dir)
     if args.resubmit:
-        delete_cache_and_resubmit_jobs(args.cohorts, args.models, wsi_base_dir, h5_base_dir, args.magnification)
+        delete_cache_and_resubmit_jobs(args.cohorts, args.models, wsi_base_dir, h5_base_dir, 
+                                       args.magnification,args.delete_cache)
     else:
-        check_preprocessing(args.cohorts,args.models,wsi_base_dir,h5_base_dir)
+        check_preprocessing(args.cohorts,args.models,wsi_base_dir,h5_base_dir,args.summary_only)
