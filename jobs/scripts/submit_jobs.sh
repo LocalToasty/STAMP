@@ -23,8 +23,8 @@ default_cohorts=("BRCA" "GBM" "LGG" "BLCA" "LUAD" "CHOL" "ESCA" "CRC" "CESC" "UC
 models=(${1:-${default_models[@]}})
 cohorts=(${2:-${default_cohorts[@]}})
 jobs_per_round=${3:-1}
-rounds=${4:-1}
-magnification=${5:-20x}
+rounds=${4:-5}
+magnification=${5:-30x}
 
 for model in ${models[@]}; do
     echo "$model"

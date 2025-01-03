@@ -102,7 +102,7 @@ def tiles_with_cache(
         # which were extracted with the same params / code,
         # we will use those.
         yield from _tiles_from_cache_file(cache_file_path)
-
+        return
     else:
         # Extract the features and save them to a cache file for later retreival.
 
