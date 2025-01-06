@@ -5,6 +5,7 @@ from collections.abc import Callable
 from functools import cache
 from pathlib import Path
 from typing import Iterator, Literal, assert_never
+from tempfile import NamedTemporaryFile
 
 import h5py
 import numpy as np
@@ -148,7 +149,7 @@ def extract_(
         extractor = dino_bloom()
     elif extractor == "virchow2":
         from stamp.preprocessing.extractor.virchow2 import virchow2
-        
+
         extractor = virchow2()
     elif extractor == "gigapath":
         from stamp.preprocessing.extractor.gigapath import gigapath
@@ -168,21 +169,23 @@ def extract_(
         assert_never(extractor)  # This should be unreachable
 
     model = extractor.model.to(accelerator).eval()
-    extractor_id = f"{extractor.identifier}-stamp-maru-21-12-24" #-{_get_preprocessing_code_hash()[:8]}
+    extractor_id = f"{extractor.identifier}-stamp-maru-21-12-24"  # -{_get_preprocessing_code_hash()[:8]}
 
     logger.info(f"Using extractor {extractor.identifier}")
 
     if cache_dir:
-        cache_dir.mkdir(exist_ok=True,parents=True)
+        cache_dir.mkdir(exist_ok=True, parents=True)
     feat_output_dir = output_dir / extractor_id
 
     for slide_path in (
         progress := tqdm(
-            np.random.permutation(list(
-                slide_path
-                for extension in supported_extensions
-                for slide_path in wsi_dir.glob(f"**/*{extension}")
-            )).tolist()
+            np.random.permutation(
+                list(
+                    slide_path
+                    for extension in supported_extensions
+                    for slide_path in wsi_dir.glob(f"**/*{extension}")
+                )
+            ).tolist()
         )
     ):
         progress.set_description(str(slide_path.relative_to(wsi_dir)))
@@ -191,7 +194,6 @@ def extract_(
         feature_output_path = feat_output_dir / slide_path.relative_to(
             wsi_dir
         ).with_suffix(".h5")
-        tmp_feature_output_path = feature_output_path.with_suffix(".tmp")
         if feature_output_path.exists():
             logger.debug(
                 f"skipping {slide_path} because {feature_output_path} already exists"
@@ -232,7 +234,10 @@ def extract_(
 
         try:
             # Save the file under an intermediate name to prevent half-written files
-            with h5py.File(tmp_feature_output_path, "w") as h5_fp:
+            with (
+                NamedTemporaryFile(dir=output_dir, delete=False) as tmp_h5_file,
+                h5py.File(tmp_h5_file, "w") as h5_fp,
+            ):
                 h5_fp["coords"] = coords
                 h5_fp["feats"] = torch.concat(feats).numpy()
 
@@ -240,11 +245,11 @@ def extract_(
                 h5_fp.attrs["unit"] = "um"
                 h5_fp.attrs["tile_size"] = tile_size_um
         except Exception:
-            logger.exception(f"error while writing {tmp_feature_output_path}")
-            tmp_feature_output_path.unlink(missing_ok=True)
+            logger.exception(f"error while writing {feature_output_path}")
+            if tmp_h5_file is not None:
+                Path(tmp_h5_file.name).unlink(missing_ok=True)
             continue
-
-        tmp_feature_output_path.rename(feature_output_path)
+        Path(tmp_h5_file.name).rename(feature_output_path)
         logger.debug(f"saved features to {feature_output_path}")
 
         # Save rejection thumbnail

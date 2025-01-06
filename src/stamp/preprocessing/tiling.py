@@ -9,6 +9,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Generic, NamedTuple, NewType, TypedDict, TypeVar, cast
 from zipfile import ZipFile
+from tempfile import NamedTemporaryFile
 
 import cv2
 import numpy as np
@@ -109,17 +110,14 @@ def tiles_with_cache(
         # We first open a temporary file and then rename it at the end.
         # Since renaming is an atomic operation on most file systems,
         # this will ensure that our cache zips will always be consistent.
-        tmp_cache_file_path = cache_file_path.with_suffix(".tmp")
-        if tmp_cache_file_path.exists():
-            # If the temporary file already exists, we can assume that
-            # another process is currently extracting the features.
-            # We will wait for that process to finish and then return its results.
-            while not cache_file_path.exists():
-                sleep(1)
-            yield from _tiles_from_cache_file(cache_file_path)
-            return   
-        try:
-            with ZipFile(tmp_cache_file_path, "w") as zip:
+        # tmp_cache_file_path = cache_file_path.with_suffix(".tmp")
+        with (
+            NamedTemporaryFile(
+                dir=cache_file_path.parent, delete=False
+            ) as tmp_cache_file,
+            ZipFile(tmp_cache_file.name, "w") as zip,
+        ):
+            try:
                 with zip.open("tiler_params.json", "w") as tiler_params_json_fp:
                     tiler_params_json_fp.write(json.dumps(tiler_params).encode())
 
@@ -138,13 +136,13 @@ def tiles_with_cache(
                         tile.image.save(tile_zip_fp, format="jpeg")
 
                     yield tile
-        except Exception as e:
-            _logger.exception(f"error while processing {slide_path}")
-            tmp_cache_file_path.unlink(missing_ok=True)
-            raise e
+            except Exception as e:
+                _logger.exception(f"error while processing {slide_path}")
+                Path(tmp_cache_file.name).unlink(missing_ok=True)
+                raise e
 
     # We have written the entire file, time to rename it to its final name.
-    tmp_cache_file_path.rename(cache_file_path)
+    Path(tmp_cache_file.name).rename(cache_file_path)
 
 
 def _tiles_with_tissue(
