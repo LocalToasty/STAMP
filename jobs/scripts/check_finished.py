@@ -3,15 +3,22 @@ import argparse
 import subprocess
 from tqdm import tqdm
 import glob
+from concurrent.futures import ThreadPoolExecutor
 
 
 def count_files(directory, extension):
     return len([f for f in os.listdir(directory) if f.endswith(extension)])
 
 
-def count_non_empty_h5_files(directory):
+def count_non_empty_h5_files(directory, num_workers=8):
     h5s = glob.glob(os.path.join(directory, "*.h5"))
-    broken = [f for f in h5s if os.path.getsize(f) <= 800]
+
+    def is_broken(file):
+        return os.path.getsize(file) <= 800
+
+    with ThreadPoolExecutor(max_workers=num_workers) as executor:
+        broken = list(tqdm(executor.map(is_broken, h5s), total=len(h5s),leave=False))
+        broken = [h5s[i] for i, is_broken in enumerate(broken) if is_broken]
     return (len(h5s) - len(broken)), broken
 
 

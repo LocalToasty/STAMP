@@ -107,12 +107,11 @@ for extractor in tqdm(feature_extractors):
         job_script = f"""#!/bin/bash
 #SBATCH --job-name=preprocess-{extractor}-{cohort}
 #SBATCH --output="outs/stamp_preprocess_{extractor}_{cohort}_{args.magnification}x_%j.out"
-#SBATCH --error="errs/stamp_preprocess_{extractor}_{cohort}_{args.magnification}x_%j.err"
 #SBATCH --ntasks=1
 #SBATCH --nodes=1
-#SBATCH --gres=gpu:1
+#SBATCH --gres=gpu:4
 #SBATCH --cpus-per-task=14
-#SBATCH --mem=100G
+#SBATCH --mem=500G
 #SBATCH --time=8:00:00
 #SBATCH --account=p_scads_pathology
 #SBATCH --partition=capella

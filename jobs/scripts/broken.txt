@@ -26,3 +26,7 @@
 /data/horse/ws/s1787956-TCGA/features/features-30x/ctranspath/TCGA-ESCA/xiyuewang-ctranspath-7c998680-stamp-maru-21-12-24/TCGA-V5-A7RC-01Z-00-DX1.044C13B6-A5D9-4DBB-BD0C-B392BB8A46D5.h5
 /data/horse/ws/s1787956-TCGA/features/features-2x/h_optimus_0/TCGA-LGG/h_optimus_0-stamp-maru-21-12-24/TCGA-E1-A7YV-01Z-00-DX2.3F5FD3A4-1234-40A5-921C-08C92F2E1C57.h5
 /data/horse/ws/s1787956-TCGA/features/features-2x/h_optimus_0/TCGA-LGG/h_optimus_0-stamp-maru-21-12-24/TCGA-E1-A7YV-01Z-00-DX2.3F5FD3A4-1234-40A5-921C-08C92F2E1C57.h5
+/data/horse/ws/s1787956-TCGA/features/features-30x/dinoSSL/TCGA-PAAD/dinoSSL-stamp-maru-21-12-24/TCGA-3A-A9IB-01Z-00-DX1.77855A18-9E12-4F6A-8FBB-B5057656C493.h5
+/data/horse/ws/s1787956-TCGA/features/features-30x/dinoSSL/TCGA-MESO/dinoSSL-stamp-maru-21-12-24/TCGA-TS-A7P7-01Z-00-DX1.0EDCAFAC-38E5-4521-A0E3-25DD79FDBF26.h5
+/data/horse/ws/s1787956-TCGA/features/features-30x/ctranspath/TCGA-DLBC/xiyuewang-ctranspath-7c998680-stamp-maru-21-12-24/TCGA-FA-A4BB-01Z-00-DX1.2BF28C5E-B2BE-4C0A-A369-BDE825EF32AD.h5
+/data/horse/ws/s1787956-TCGA/features/features-30x/ctranspath/TCGA-ESCA/xiyuewang-ctranspath-7c998680-stamp-maru-21-12-24/TCGA-V5-A7RC-01Z-00-DX1.044C13B6-A5D9-4DBB-BD0C-B392BB8A46D5.h5
